@@ -1,0 +1,19 @@
+{
+  "name": "Fantasy Golf 2026",
+  "short_name": "Fantasy Golf",
+  "description": "Fantasy Golf League 2026 — leaderboard, picks, schedule, rosters",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a1410",
+  "theme_color": "#0a3d2c",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
