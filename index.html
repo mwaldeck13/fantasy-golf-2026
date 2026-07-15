@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a3d2c" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a1410" media="(prefers-color-scheme: dark)" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Fantasy Golf" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<title>Fantasy Golf 2026</title>
+<style>
+  :root {
+    --bg: #f5f7f5;
+    --surface: #ffffff;
+    --surface-alt: #eef2ee;
+    --text: #0e1a14;
+    --text-dim: #5b6b62;
+    --accent: #0a3d2c;
+    --accent-soft: #d8efe2;
+    --gold: #c9a14a;
+    --danger: #b3261e;
+    --line: #d8e0db;
+    --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    --radius: 12px;
+    /* Chart palette — 7 hues that hold up at the same lightness */
+    --chart-l: 42%;
+    --c1: hsl(  6, 72%, var(--chart-l));
+    --c2: hsl( 28, 82%, var(--chart-l));
+    --c3: hsl( 48, 70%, var(--chart-l));
+    --c4: hsl(150, 50%, var(--chart-l));
+    --c5: hsl(195, 65%, var(--chart-l));
+    --c6: hsl(225, 65%, var(--chart-l));
+    --c7: hsl(285, 50%, var(--chart-l));
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a1410;
+      --surface: #121f1a;
+      --surface-alt: #1a2a23;
+      --text: #e8efe9;
+      --text-dim: #91a298;
+      --accent: #4ec38a;
+      --accent-soft: #1d3a2c;
+      --gold: #e0bd6c;
+      --danger: #f08079;
+      --line: #243530;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25);
+      --chart-l: 62%;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: max(env(safe-area-inset-top), 0px) 16px 0;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 8px;
+  }
+  .title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .title .yr { color: var(--text-dim); font-weight: 500; margin-left: 6px; }
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  button.refresh {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--surface-alt);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 32px;
+  }
+  button.refresh:active { transform: scale(0.97); }
+  button.refresh[disabled] { opacity: 0.5; }
+  nav.tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  nav.tabs button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    min-height: 36px;
+  }
+  nav.tabs button.active {
+    background: var(--accent);
+    color: white;
+  }
+  @media (prefers-color-scheme: dark) {
+    nav.tabs button.active { color: var(--bg); }
+  }
+  main {
+    padding: 16px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .toast {
+    background: color-mix(in srgb, var(--danger) 15%, var(--surface));
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  .empty {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 32px 16px;
+    font-size: 14px;
+  }
+  /* Leaderboard */
+  .lb-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-row .rank {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .lb-row .name {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .lb-row .sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .lb-row .total {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .lb-row.expanded {
+    background: var(--surface-alt);
+  }
+  .lb-row.rank-1 .rank { color: var(--gold); }
+  .lb-detail {
+    background: var(--surface-alt);
+    padding: 4px 16px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+  }
+  .lb-detail table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .lb-detail td {
+    padding: 4px 0;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .lb-detail td.wk { width: 36px; }
+  .lb-detail td.golfer { color: var(--text); }
+  .lb-detail td.pay { text-align: right; font-weight: 600; color: var(--text); }
+  .lb-detail td.pay.zero { color: var(--text-dim); font-weight: 400; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-left: 6px;
+  }
+  .badge.gold { background: color-mix(in srgb, var(--gold) 25%, transparent); color: var(--gold); }
+  /* Week selector */
+  .week-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+  .week-bar select {
+    flex: 1;
+    min-width: 0;            /* let flex shrink below the longest option's intrinsic width */
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 10px 32px 10px 12px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='%23888' d='M2 4l4 4 4-4'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .week-bar .nav-btn {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .week-bar .nav-btn[disabled] { opacity: 0.3; }
+  .week-title {
+    padding: 12px 16px 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .week-title strong { color: var(--text); text-transform: none; letter-spacing: 0; }
+  .pick-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .pick-row .who {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+  .pick-row .golfer {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .pick-row .finish {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-left: 6px;
+    font-weight: 500;
+  }
+  .pick-row .pay {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .pick-row .pay.zero { color: var(--text-dim); font-weight: 400; }
+  .pick-row.winner { background: color-mix(in srgb, var(--gold) 12%, transparent); }
+  .pick-row.winner .golfer::after { content: " 🏆"; }
+  .live-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+  }
+  .live-pos {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--surface-alt);
+    padding: 2px 6px;
+    border-radius: 999px;
+  }
+  .live-badge {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  .live-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: white;
+    background: var(--danger);
+    padding: 2px 7px;
+    border-radius: 999px;
+    vertical-align: 2px;
+    margin-left: 6px;
+    animation: live-pulse 2s ease-in-out infinite;
+  }
+  @media (prefers-color-scheme: dark) { .live-pill { color: var(--bg); } }
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+  /* Schedule */
+  .sched-row {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sched-row:last-child { border-bottom: none; }
+  .sched-row .wk {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+  .sched-row .ev { font-size: 15px; font-weight: 600; }
+  .sched-row .winner {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .sched-row .winner b { color: var(--text); font-weight: 600; }
+  .sched-row.future { opacity: 0.55; }
+  .sched-row.future .ev { font-weight: 500; }
+  /* Rosters */
+  .roster-card { padding: 16px; }
+  .roster-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .roster-head .nm { font-size: 16px; font-weight: 700; }
+  .roster-head .sm { font-size: 12px; color: var(--text-dim); }
+  .roster-summary {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 6px 0 12px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .roster-summary span b { color: var(--text); font-weight: 600; }
+  .roster-list {
+    display: grid;
+    grid-template-columns: 32px 1fr auto auto;
+    gap: 6px 10px;
+    align-items: baseline;
+    font-size: 13px;
+  }
+  .roster-list .wk { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .roster-list .gf { font-weight: 500; }
+  .roster-list .fn { color: var(--text-dim); font-size: 12px; }
+  .roster-list .tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag.reusable { background: var(--accent-soft); color: var(--accent); }
+  .tag.locked { background: var(--surface-alt); color: var(--text-dim); }
+  .tag.winner { background: color-mix(in srgb, var(--gold) 25%, transparent); color: var(--gold); }
+  /* My Pick form */
+  .form-card { padding: 16px; }
+  .form-card h2 { margin: 0 0 12px; font-size: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 12px;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-family: inherit;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='%23888' d='M2 4l4 4 4-4'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  .field input:focus, .field select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  .field .hint { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .field .hint.err { color: var(--danger); font-weight: 500; }
+  .field .hint.ok { color: var(--accent); font-weight: 500; }
+  .submit-btn {
+    width: 100%;
+    appearance: none;
+    border: none;
+    background: var(--accent);
+    color: white;
+    padding: 14px;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    min-height: 48px;
+  }
+  @media (prefers-color-scheme: dark) { .submit-btn { color: var(--bg); } }
+  .submit-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .submit-btn:active:not([disabled]) { transform: scale(0.98); }
+  .status-panel {
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .status-panel .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .status-panel .row b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .status-panel .verdict {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .status-panel .verdict.ok { background: var(--accent-soft); color: var(--accent); }
+  .status-panel .verdict.err { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+  .status-panel .verdict.idle { color: var(--text-dim); font-weight: 400; }
+  .success-banner {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .warn {
+    background: color-mix(in srgb, var(--gold) 18%, transparent);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  /* Custom golfer autocomplete dropdown */
+  .ac-wrap {
+    position: relative;
+  }
+  .ac-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    /* Use available viewport height; capped so it doesn't dominate desktop. */
+    max-height: min(360px, 50vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ac-row {
+    display: block;
+    width: 100%;
+    text-align: left;
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    padding: 9px 14px;
+    font-size: 15px;
+    line-height: 1.25;
+    font-family: inherit;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ac-row:last-child { border-bottom: none; }
+  .ac-row:active, .ac-row.active { background: var(--surface-alt); }
+  .ac-row .match { font-weight: 700; color: var(--accent); }
+  .ac-empty {
+    padding: 14px;
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+  }
+  /* Earnings chart */
+  .chart-card { padding: 14px 10px 8px; }
+  .chart-card .chart-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 6px 6px;
+  }
+  .chart-card .chart-title .hint { font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 6px; }
+  .chart-svg {
+    display: block;
+    width: 100%;
+    height: 240px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chart-axis {
+    stroke: var(--line);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+  }
+  .chart-axis-label {
+    fill: var(--text-dim);
+    font-size: 11px;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+  .chart-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: opacity 0.18s;
+  }
+  .chart-line.dim { opacity: 0.15; }
+  .chart-dot { transition: opacity 0.18s; }
+  .chart-dot.dim { opacity: 0.15; }
+  .chart-label {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: opacity 0.18s;
+  }
+  .chart-label.dim { opacity: 0.15; }
+  /* Loading skeleton */
+  .skel {
+    background: linear-gradient(90deg, var(--surface-alt), var(--line), var(--surface-alt));
+    background-size: 200% 100%;
+    animation: skel 1.4s linear infinite;
+    height: 16px;
+    border-radius: 4px;
+  }
+  @keyframes skel {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .config-card {
+    padding: 20px;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  .config-card h2 { margin: 0 0 12px; font-size: 16px; }
+  .config-card code {
+    background: var(--surface-alt);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    word-break: break-all;
+  }
+  .config-card ol { padding-left: 20px; }
+  .config-card li { margin-bottom: 8px; }
+
+  /* Outlook tab */
+  .outlook-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .outlook-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .outlook-table th, .outlook-table td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .outlook-table tbody tr:last-child td { border-bottom: none; }
+  .outlook-table thead th { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); font-weight: 600; }
+  .outlook-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .outlook-table .wk { color: var(--text-dim); font-weight: 600; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap;
+          background: var(--surface-alt); color: var(--text-dim); }
+  .chip.gold { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--gold); }
+  .chip.live { background: var(--accent-soft); color: var(--accent); }
+  .chase-row { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; line-height: 1.45; }
+  .chase-row:last-of-type { border-bottom: none; }
+  .chase-row b { color: var(--text); }
+  .outlook-note { margin-top: 10px; font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-row">
+    <div class="title">Fantasy Golf <span class="yr">2026</span></div>
+    <div class="meta">
+      <span id="updated">—</span>
+      <button class="refresh" id="refreshBtn" aria-label="Refresh">↻ Refresh</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="leaderboard" class="active">Leaderboard</button>
+    <button data-tab="picks">Weekly Picks</button>
+    <button data-tab="schedule">Schedule</button>
+    <button data-tab="rosters">Rosters</button>
+    <button data-tab="outlook">The Chase</button>
+    <button data-tab="avgfinish">Average Finish</button>
+    <button data-tab="mypick" id="myPickTab" hidden>Submit Pick</button>
+  </nav>
+</header>
+<main id="main">
+  <div class="card"><div class="empty"><div class="skel" style="width:60%;margin:0 auto 12px"></div><div class="skel" style="width:40%;margin:0 auto"></div></div></div>
+</main>
+
+<script>
+"use strict";
+
+// ============================================================================
+// CONFIG — Replace CSV_URL with your published Google Sheet CSV URL.
+// In Google Sheets: File > Share > Publish to web > Comma-separated values (.csv)
+// ============================================================================
+const CONFIG = {
+  CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpYe7C4Bh8PW14JluPCq1NoxpCs7Keg5wq10b3CMJOGRgArzw92MZePEyCikw-FDMpxyRSOOSlHPaE/pub?output=csv",
+  // Apps Script Web App URL (Sheet > Extensions > Apps Script > Deploy as web app).
+  // Leave blank to disable the My Pick tab.
+  SUBMIT_URL: "https://script.google.com/macros/s/AKfycbxwqJ63cj8yeTWJMZjVsDzZpX9olvxae_RGyWZy8VG0JG-Vd6e_1tATNEX3P-StuAB2Wg/exec",
+  // Optional: separate published CSV for the Schedule tab (Week | Event | Deadline).
+  // Leave blank if you don't want deadline enforcement / pick submission.
+  SCHEDULE_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpYe7C4Bh8PW14JluPCq1NoxpCs7Keg5wq10b3CMJOGRgArzw92MZePEyCikw-FDMpxyRSOOSlHPaE/pub?gid=965659916&single=true&output=csv",
+  // Optional: separate published CSV for the Field tab (Week | Golfer).
+  // Populated by the Apps Script ESPN sync. Powers the soft "not in field" warning.
+  // Leave blank to skip field validation entirely.
+  FIELD_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpYe7C4Bh8PW14JluPCq1NoxpCs7Keg5wq10b3CMJOGRgArzw92MZePEyCikw-FDMpxyRSOOSlHPaE/pub?gid=918333425&single=true&output=csv",
+  LOCAL_FALLBACK: "Fantasy Golf 2026 - Compiled through Week 16.csv", // for local dev
+  TOTAL_WEEKS: 33
+};
+
+// ============================================================================
+// STATE
+// ============================================================================
+const STATE = {
+  tab: "leaderboard",
+  data: null,    // parsed { participants, weeks, schedule }
+  error: null,
+  loading: true,
+  pickWeek: null,
+  expandedRow: null,
+  lastUpdated: null,
+  // My Pick form state
+  form: {
+    name: localStorage.getItem("fg_name") || "",
+    pin: "",
+    week: null,
+    golfer: ""
+  },
+  formStatus: null,    // { type: "ok"|"err", message: string } from last submit
+  submitting: false
+};
+
+// ============================================================================
+// CSV PARSER (handles quoted fields, embedded commas, newlines in quotes)
+// ============================================================================
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else { field += c; }
+    } else {
+      if (c === '"') { inQuotes = true; }
+      else if (c === ",") { row.push(field); field = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(field); field = "";
+        if (row.some(x => x !== "")) rows.push(row);
+        row = [];
+      } else { field += c; }
+    }
+  }
+  if (field !== "" || row.length) {
+    row.push(field);
+    if (row.some(x => x !== "")) rows.push(row);
+  }
+  return rows;
+}
+
+// ============================================================================
+// DOMAIN PARSER — turn raw rows into structured league data
+// ============================================================================
+function parseLeague(rows) {
+  if (!rows.length) throw new Error("Empty CSV");
+  const header = rows[0];
+  // Header layout: ["", "Event", name1, "Payout", name2, "Payout", ...]
+  const participants = [];
+  for (let c = 2; c + 1 < header.length; c += 2) {
+    const name = (header[c] || "").trim();
+    if (name && name.toLowerCase() !== "payout") participants.push({ name, col: c });
+  }
+  const weeks = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const wkCell = (row[0] || "").trim();
+    const event = (row[1] || "").trim();
+    // Skip the trailing "Total Payout" summary row (week cell empty)
+    if (!wkCell || isNaN(parseInt(wkCell, 10))) continue;
+    const week = parseInt(wkCell, 10);
+    const picks = {};
+    for (const p of participants) {
+      const cell = (row[p.col] || "").trim();
+      const payCell = (row[p.col + 1] || "").trim();
+      if (!cell) { picks[p.name] = null; continue; }
+      // Parse "Player Name (T4)" or "Name (1)" or "Name (MC)"
+      const m = cell.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+      const golfer = m ? m[1].trim() : cell;
+      const finish = m ? m[2].trim() : "";
+      const payout = parsePayout(payCell);
+      picks[p.name] = { golfer, finish, payout, raw: cell };
+    }
+    weeks.push({ week, event, picks });
+  }
+  return { participants: participants.map(p => p.name), weeks };
+}
+
+function parsePayout(s) {
+  if (!s) return 0;
+  const n = parseInt(s.replace(/[$,\s]/g, ""), 10);
+  return isNaN(n) ? 0 : n;
+}
+
+// ESPN /pga/scoreboard JSON → { eventName, completed, statusDescription, byName }
+// where byName is keyed by lowercase golfer name -> { score, position }.
+// "position" includes "T" prefix for tied finishes (T4, T11).
+function parseLiveLeaderboard(json) {
+  if (!json || !json.events || !json.events.length) return null;
+  const e = json.events[0];
+  const status = (e.status && e.status.type) || {};
+  const competitors = ((e.competitions && e.competitions[0] && e.competitions[0].competitors) || [])
+    .map(c => ({
+      name: (c.athlete && c.athlete.displayName) || "",
+      order: c.order,
+      score: c.score
+    }))
+    .filter(c => c.name);
+  const sorted = competitors.slice().sort((a, b) => a.order - b.order);
+  const positionByName = {};
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    while (j < sorted.length && sorted[j].score === sorted[i].score) j++;
+    const tied = (j - i) > 1;
+    const pos = sorted[i].order;
+    for (let k = i; k < j; k++) {
+      positionByName[sorted[k].name.toLowerCase()] = tied ? `T${pos}` : `${pos}`;
+    }
+    i = j;
+  }
+  const byName = {};
+  for (const c of competitors) {
+    byName[c.name.toLowerCase()] = {
+      score: c.score,
+      position: positionByName[c.name.toLowerCase()] || ""
+    };
+  }
+  return {
+    eventName: e.name || "",
+    completed: !!status.completed,
+    statusDescription: status.description || "",
+    byName
+  };
+}
+
+// Determine which scheduled week (if any) corresponds to the live tournament.
+function getLiveWeek(data) {
+  if (!data.live || !data.schedule) return null;
+  const norm = s => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const liveKey = norm(data.live.eventName);
+  if (!liveKey) return null;
+  for (const [wk, info] of Object.entries(data.schedule)) {
+    const evKey = norm(info && info.event);
+    if (!evKey) continue;
+    if (evKey === liveKey || evKey.includes(liveKey) || liveKey.includes(evKey)) {
+      return parseInt(wk, 10);
+    }
+  }
+  return null;
+}
+
+// Field CSV: Week | Golfer (one row per golfer per week).
+// Returns { [week]: ["Golfer Name", ...] }.
+function parseField(rows) {
+  const out = {};
+  if (!rows || rows.length < 2) return out;
+  for (let r = 1; r < rows.length; r++) {
+    const wk = parseInt((rows[r][0] || "").trim(), 10);
+    const golfer = (rows[r][1] || "").trim();
+    if (!wk || !golfer) continue;
+    if (!out[wk]) out[wk] = [];
+    out[wk].push(golfer);
+  }
+  return out;
+}
+
+// Deadlines in the Schedule sheet are entered as wall-clock time in the league's
+// home timezone. Matches Code.gs `TZ` constant. Keep these in sync.
+const LEAGUE_TZ = "America/New_York";
+
+// Hour (ET, 24h) assumed when a deadline is a bare date with no time. Must match
+// DEFAULT_DEADLINE_HOUR in Code.gs so the client and server agree, and so a
+// date-only cell never lands on midnight (which Safari can mis-parse / shift).
+const DEFAULT_DEADLINE_HOUR = 7;
+
+// Returns the offset of LEAGUE_TZ from UTC, in minutes, at the given instant.
+// EST → -300, EDT → -240. Uses Intl so DST is correct without a lookup table.
+function leagueTzOffsetMinutes(instant) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: LEAGUE_TZ, timeZoneName: "longOffset"
+  }).formatToParts(instant);
+  const name = (parts.find(p => p.type === "timeZoneName") || {}).value || "GMT-05:00";
+  const m = name.match(/GMT([+-])(\d{1,2}):?(\d{2})?/);
+  if (!m) return -300;
+  return (m[1] === "+" ? 1 : -1) * (parseInt(m[2], 10) * 60 + parseInt(m[3] || "0", 10));
+}
+
+// Parse a deadline string from the Schedule CSV, treating the wall-clock components
+// as LEAGUE_TZ rather than the browser's local timezone. This is the whole point —
+// otherwise "5/28/2026 7:00:00" parses as 7am wherever the participant happens to
+// be sitting, which silently shifts the cutoff by their offset from Eastern.
+function parseDeadlineInLeagueTZ(s) {
+  if (!s) return null;
+  // Time portion is optional — a bare "M/D/YYYY" is treated as DEFAULT_DEADLINE_HOUR
+  // in league time, not the browser's local midnight (which also dodges Safari's
+  // inconsistent slash-date parsing).
+  const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i);
+  if (!m) {
+    // Fallback: ISO 8601 with offset, or anything else `new Date` handles unambiguously.
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  let h = (m[4] != null) ? parseInt(m[4], 10) : DEFAULT_DEADLINE_HOUR;
+  const ap = m[7];
+  if (ap) {
+    if (/PM/i.test(ap) && h < 12) h += 12;
+    if (/AM/i.test(ap) && h === 12) h = 0;
+  }
+  const utcGuess = Date.UTC(+m[3], +m[1] - 1, +m[2], h, +(m[5] || 0), +(m[6] || 0));
+  const off = leagueTzOffsetMinutes(new Date(utcGuess));
+  return new Date(utcGuess - off * 60 * 1000);
+}
+
+// Schedule CSV: Week | Event | Deadline | [<pos> | <pos> | …].
+// Columns from D onward are optional per-position projected payouts for the
+// closing tournaments: the header cell is the finishing position (1, 2, 3, …)
+// and the body cell is that position's prize money. Used by the Outlook tab.
+// Returns { [week]: {event, deadline, payouts:{[pos]:amount}, winnerPayout} }.
+function parseSchedule(rows) {
+  const out = {};
+  if (!rows || rows.length < 2) return out;
+  // Identify payout columns from the header row (col index >= 3 whose header
+  // parses to a positive finishing position). Robust to gaps (e.g. 1,2,3,5,10).
+  const header = rows[0] || [];
+  const payoutCols = [];
+  let cutCol = -1;
+  for (let c = 3; c < header.length; c++) {
+    const h = String(header[c] || "").trim();
+    if (/^(made\s*)?cut$/i.test(h)) { cutCol = c; continue; }   // "Cut" / "Made Cut" column (# who made the cut)
+    const pos = parseInt(h.replace(/[^0-9]/g, ""), 10);
+    if (pos > 0) payoutCols.push({ col: c, pos });
+  }
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const wk = parseInt((row[0] || "").trim(), 10);
+    if (!wk) continue;
+    const event = (row[1] || "").trim();
+    const ddlRaw = (row[2] || "").trim();
+    const payouts = {};
+    for (const { col, pos } of payoutCols) {
+      const amt = parsePayout(row[col]);
+      if (amt > 0) payouts[pos] = amt;
+    }
+    const cutRaw = cutCol >= 0 ? parseInt(String(row[cutCol] || "").replace(/[^0-9]/g, ""), 10) : NaN;
+    out[wk] = {
+      event, deadline: parseDeadlineInLeagueTZ(ddlRaw), payouts, winnerPayout: payouts[1] || 0,
+      cut: Number.isFinite(cutRaw) && cutRaw > 0 ? cutRaw : null
+    };
+  }
+  return out;
+}
+
+// Made-cut counts (players/teams who made the cut) for weeks that predate the
+// Schedule tab (which only covers week 16 onward). ESPN-derived and immutable, so
+// baked in. Weeks 16+ get their cut from the Schedule "Cut" column (auto-filled by
+// the Apps Script results sync). Only weeks that had an MC/WD pick are listed.
+const HISTORICAL_CUTS = { 2: 73, 3: 74, 8: 50, 11: 75, 12: 70, 13: 54, 15: 35 };
+
+function cutForWeek(week, data) {
+  const s = data.schedule && data.schedule[week];
+  if (s && s.cut != null) return s.cut;              // Schedule "Cut" column wins
+  return HISTORICAL_CUTS[week] != null ? HISTORICAL_CUTS[week] : null;
+}
+
+// Picks for a week stay hidden from everyone until that week's submission deadline
+// passes — you can see that someone picked, but not who, until the cutoff.
+// A week with no deadline set (e.g. the pre-Schedule-tab weeks) is treated as open
+// history and shown normally.
+function isWeekHidden(week, data) {
+  const s = data.schedule && data.schedule[week];
+  return !!(s && s.deadline && new Date() < s.deadline);
+}
+
+// Convert a finish token to a numeric finishing position.
+//   "1" → 1, "8" → 8, "T35" → 35 (ties use their position number).
+//   MC/WD/DQ (didn't finish / no place) → (# who made the cut) + 1, if known.
+// Returns null when the pick shouldn't count (no finish yet, or a DNF with no
+// cut size available).
+function finishToPosition(finish, cut) {
+  const f = String(finish || "").trim().toUpperCase();
+  if (!f || f === "—") return null;
+  const m = f.match(/^T?(\d+)$/);
+  if (m) return parseInt(m[1], 10);
+  if (/^(MC|WD|DQ|CUT|MDF)$/.test(f)) return cut != null ? cut + 1 : null;
+  return null;
+}
+
+// ============================================================================
+// COMPUTED — totals, ranks, reuse credits, locked status
+// ============================================================================
+function computeStandings(data) {
+  const { participants, weeks } = data;
+  const stats = {};
+  for (const name of participants) {
+    stats[name] = {
+      name,
+      total: 0,
+      winners: 0,           // count of finish === "1"
+      latestWinnerWeek: 0,  // highest week where they picked the winner
+      reusesSpent: 0,
+      picks: [],            // { week, event, golfer, finish, payout, isWinner }
+      golferCounts: {},
+      posSum: 0,            // running sum of finishing positions (for avg place)
+      posCount: 0,          // # of scored picks counted toward avg place
+      posMissingCut: 0      // MC/WD picks skipped because cut size unknown
+    };
+  }
+  for (const wk of weeks) {
+    const cut = cutForWeek(wk.week, data);
+    for (const name of participants) {
+      const pick = wk.picks[name];
+      if (!pick) continue;
+      const isWinner = pick.finish === "1";
+      const s = stats[name];
+      s.total += pick.payout;
+      s.picks.push({ ...pick, week: wk.week, event: wk.event, isWinner });
+      if (isWinner) {
+        s.winners++;
+        if (wk.week > s.latestWinnerWeek) s.latestWinnerWeek = wk.week;
+      }
+      s.golferCounts[pick.golfer] = (s.golferCounts[pick.golfer] || 0) + 1;
+      // Average finishing position
+      if (pick.finish && String(pick.finish).trim()) {
+        const pos = finishToPosition(pick.finish, cut);
+        if (pos != null) { s.posSum += pos; s.posCount++; }
+        else s.posMissingCut++;   // a DNF we couldn't place (missing cut size)
+      }
+    }
+  }
+  // reusesSpent = number of picks beyond the first for each golfer
+  for (const s of Object.values(stats)) {
+    let spent = 0;
+    for (const c of Object.values(s.golferCounts)) if (c > 1) spent += (c - 1);
+    s.reusesSpent = spent;
+    s.creditsRemaining = s.winners - s.reusesSpent;
+    s.avgPosition = s.posCount ? s.posSum / s.posCount : null;
+  }
+  // Ranked leaderboard
+  const ranked = Object.values(stats).sort((a, b) => b.total - a.total);
+  return { stats, ranked };
+}
+
+// A week counts as "scored" once results are in — i.e. at least one pick has a
+// finishing position recorded. Submitted-but-unplayed picks have no finish yet.
+function weekScored(w) {
+  return !!(w && Object.values(w.picks).some(p => p && p.finish && String(p.finish).trim()));
+}
+
+// End-of-season projection. Scores accumulate independently (participants may pick
+// the same golfer, and nobody's gain costs anyone else), so each player's maximum
+// possible gain is the winner's payout of every remaining week — the same pool R
+// for everyone. That makes best/worst finishing positions exact under the optimistic
+// assumption that a player can pick each remaining winner.
+function computeOutlook(data) {
+  const { ranked } = computeStandings(data);
+  const schedule = data.schedule || {};
+  const byWeek = {};
+  for (const w of data.weeks) byWeek[w.week] = w;
+
+  // Remaining = weeks with projected winner money entered that aren't scored yet.
+  const remaining = [];
+  for (let n = 1; n <= CONFIG.TOTAL_WEEKS; n++) {
+    const s = schedule[n];
+    if (!s || !s.winnerPayout) continue;
+    if (weekScored(byWeek[n])) continue;
+    remaining.push({ week: n, event: s.event, payouts: s.payouts, winnerPayout: s.winnerPayout });
+  }
+  remaining.sort((a, b) => a.week - b.week);
+
+  const R = remaining.reduce((sum, r) => sum + r.winnerPayout, 0); // winner money still on the table
+  const M = remaining.length;
+  const descWinners = remaining.map(r => r.winnerPayout).sort((a, b) => b - a);
+
+  // Fewest remaining wins (grabbing the biggest purses first) to erase a gap.
+  function minWinnersToCover(gap) {
+    if (gap <= 0) return 0;
+    let sum = 0;
+    for (let i = 0; i < descWinners.length; i++) {
+      sum += descWinners[i];
+      if (sum > gap) return i + 1;
+    }
+    return Infinity; // can't cover the gap even by winning every remaining week
+  }
+
+  const base = ranked.map(s => ({ name: s.name, current: s.total, ceiling: s.total + R }));
+  const leaderTotal = base.length ? base[0].current : 0;
+
+  const players = base.map((p, i) => {
+    const rank = i + 1;
+    const isLeader = p.current >= leaderTotal;
+    // Exact best/worst finishing position under the optimistic ceiling.
+    const bestRank = 1 + base.filter(q => q.name !== p.name && q.current > p.ceiling).length;
+    const worstRank = 1 + base.filter(q => q.name !== p.name && q.ceiling > p.current).length;
+    const gapToLead = Math.max(0, leaderTotal - p.current);
+    const winsNeeded = isLeader ? 0 : minWinnersToCover(gapToLead);
+    const canWin = isLeader || p.ceiling > leaderTotal;
+    const clinchedTitle = worstRank === 1;
+    // Who currently ahead of P can P still overtake? (their current < P's ceiling)
+    const canOvertake = base.filter(q => q.current > p.current && q.current < p.ceiling).map(q => q.name);
+    return { ...p, rank, isLeader, bestRank, worstRank, gapToLead, winsNeeded, canWin, clinchedTitle, canOvertake };
+  });
+
+  return { players, remaining, R, M, leaderTotal };
+}
+
+function tournamentWinner(week) {
+  // The tournament winner is the golfer that any participant picked with finish "1".
+  // (If no participant picked the winner that week, returns null.)
+  for (const [, pick] of Object.entries(week.picks)) {
+    if (pick && pick.finish === "1") {
+      const pickedBy = Object.entries(week.picks)
+        .filter(([, p]) => p && p.finish === "1")
+        .map(([n]) => n);
+      return { golfer: pick.golfer, pickedBy };
+    }
+  }
+  return null;
+}
+
+// ============================================================================
+// PICK VALIDATION (mirror of the Apps Script server-side rules)
+// ============================================================================
+// Returns { ok: bool, error?: string, info?: string, isEdit?: bool }
+function canPick(participant, week, golfer, data) {
+  if (!participant) return { ok: false, error: "Pick a name." };
+  if (!week)        return { ok: false, error: "Pick a week." };
+  if (!golfer || !golfer.trim()) return { ok: false, error: "Enter a golfer." };
+  golfer = golfer.trim();
+
+  // Deadline check
+  const sched = data.schedule && data.schedule[week];
+  if (!sched || !sched.deadline) {
+    return { ok: false, error: `Week ${week} not yet open for picks (no deadline set).` };
+  }
+  if (new Date() > sched.deadline) {
+    return { ok: false, error: `Week ${week} deadline has passed.` };
+  }
+
+  // Compute their existing picks; treat existing pick for this week as an "edit"
+  const { stats } = computeStandings(data);
+  const s = stats[participant];
+  if (!s) return { ok: false, error: "Unknown participant." };
+  const existingThisWeek = s.picks.find(p => p.week === week);
+  const isEdit = !!existingThisWeek;
+
+  // Drop the existing pick (so editing back to a different name is treated like a new pick)
+  const otherPicks = s.picks.filter(p => p.week !== week);
+
+  // Same-name check (case-insensitive)
+  const lower = golfer.toLowerCase();
+  const previously = otherPicks.find(p => p.golfer.toLowerCase() === lower);
+
+  if (!previously) {
+    return { ok: true, isEdit, info: isEdit ? "Will replace your current pick." : "Fresh golfer — looks good." };
+  }
+
+  // Repeat pick: needs a credit AND first-use week ≤ latestWinnerWeek
+  // Recompute for the "others" set (not the published one — this excludes the editing-out pick)
+  let winners = 0, latest = 0;
+  const counts = {};
+  const firstWk = {};
+  for (const p of otherPicks) {
+    counts[p.golfer] = (counts[p.golfer] || 0) + 1;
+    if (firstWk[p.golfer] == null || p.week < firstWk[p.golfer]) firstWk[p.golfer] = p.week;
+    if (p.isWinner) { winners++; if (p.week > latest) latest = p.week; }
+  }
+  let spent = 0;
+  for (const c of Object.values(counts)) if (c > 1) spent += (c - 1);
+  const credits = winners - spent;
+
+  let resolvedFirstWk = null;
+  for (const [name, wk] of Object.entries(firstWk)) {
+    if (name.toLowerCase() === lower) { resolvedFirstWk = wk; break; }
+  }
+
+  if (latest === 0) {
+    return { ok: false, error: `${previously.golfer} already used in Week ${resolvedFirstWk} — no reuse credits earned yet.` };
+  }
+  if (resolvedFirstWk > latest) {
+    return {
+      ok: false,
+      error: `${previously.golfer} is locked: first picked Week ${resolvedFirstWk}, after your latest winner-pick (Week ${latest}).`
+    };
+  }
+  if (credits <= 0) {
+    return { ok: false, error: `No reuse credits remaining (${winners} earned, ${spent} spent).` };
+  }
+  return {
+    ok: true,
+    isEdit,
+    info: `Reuse: spends 1 of ${credits} credit${credits === 1 ? "" : "s"} (${previously.golfer} from Week ${resolvedFirstWk}).`
+  };
+}
+
+// ============================================================================
+// FETCH & LOAD
+// ============================================================================
+async function loadData() {
+  STATE.loading = true;
+  STATE.error = null;
+  render();
+  const url = CONFIG.CSV_URL || CONFIG.LOCAL_FALLBACK;
+  if (!url) {
+    STATE.loading = false;
+    STATE.error = "config";
+    render();
+    return;
+  }
+  try {
+    // Cache-bust to ensure fresh data on refresh
+    const bust = url.includes("?") ? "&" : "?";
+    const fetches = [fetch(url + bust + "_=" + Date.now(), { cache: "no-store" })];
+    const idx = { picks: 0, schedule: -1, field: -1, live: -1 };
+    if (CONFIG.SCHEDULE_CSV_URL) {
+      const sb = CONFIG.SCHEDULE_CSV_URL.includes("?") ? "&" : "?";
+      idx.schedule = fetches.length;
+      fetches.push(fetch(CONFIG.SCHEDULE_CSV_URL + sb + "_=" + Date.now(), { cache: "no-store" }));
+    }
+    if (CONFIG.FIELD_CSV_URL) {
+      const fb = CONFIG.FIELD_CSV_URL.includes("?") ? "&" : "?";
+      idx.field = fetches.length;
+      fetches.push(fetch(CONFIG.FIELD_CSV_URL + fb + "_=" + Date.now(), { cache: "no-store" }));
+    }
+    // ESPN live scoreboard — free, public, CORS-enabled. No API key.
+    idx.live = fetches.length;
+    fetches.push(fetch("https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?_=" + Date.now(), { cache: "no-store" }));
+    const results = await Promise.all(fetches.map(p => p.catch(e => ({ __err: e }))));
+    const picksRes = results[idx.picks];
+    if (picksRes.__err) throw picksRes.__err;
+    if (!picksRes.ok) throw new Error("HTTP " + picksRes.status);
+    const text = await picksRes.text();
+    const rows = parseCSV(text);
+    const data = parseLeague(rows);
+    data.schedule = {};
+    data.field = {};
+    data.live = null;
+    if (idx.schedule >= 0 && results[idx.schedule] && !results[idx.schedule].__err) {
+      try {
+        const schedText = await results[idx.schedule].text();
+        data.schedule = parseSchedule(parseCSV(schedText));
+      } catch (e) { console.warn("Schedule CSV failed:", e); }
+    }
+    if (idx.field >= 0 && results[idx.field] && !results[idx.field].__err) {
+      try {
+        const fieldText = await results[idx.field].text();
+        data.field = parseField(parseCSV(fieldText));
+      } catch (e) { console.warn("Field CSV failed:", e); }
+    }
+    if (idx.live >= 0 && results[idx.live] && !results[idx.live].__err && results[idx.live].ok) {
+      try {
+        const liveJson = await results[idx.live].json();
+        data.live = parseLiveLeaderboard(liveJson);
+      } catch (e) { console.warn("Live leaderboard failed:", e); }
+    }
+    STATE.data = data;
+    STATE.lastUpdated = new Date();
+    if (STATE.pickWeek == null) {
+      // Default to most recent week with at least one pick
+      const played = data.weeks.filter(w => Object.values(w.picks).some(p => p));
+      STATE.pickWeek = played.length ? played[played.length - 1].week : 1;
+    }
+    STATE.loading = false;
+    render();
+  } catch (e) {
+    console.error(e);
+    STATE.loading = false;
+    STATE.error = "Couldn't load data: " + e.message + (STATE.data ? " (showing last known data)" : "");
+    render();
+  }
+}
+
+// ============================================================================
+// RENDERING
+// ============================================================================
+const $ = sel => document.querySelector(sel);
+
+function fmtMoney(n) {
+  if (!n) return "$0";
+  return "$" + n.toLocaleString("en-US");
+}
+
+function fmtRelative(d) {
+  if (!d) return "—";
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.floor(s / 60) + "m ago";
+  if (s < 86400) return Math.floor(s / 3600) + "h ago";
+  return d.toLocaleDateString();
+}
+
+function escape(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function render() {
+  $("#updated").textContent = STATE.lastUpdated ? "Updated " + fmtRelative(STATE.lastUpdated) : (STATE.loading ? "Loading…" : "—");
+  $("#refreshBtn").disabled = STATE.loading;
+  // Show My Pick tab only when SUBMIT_URL is configured
+  const myPickBtn = $("#myPickTab");
+  if (myPickBtn) myPickBtn.hidden = !CONFIG.SUBMIT_URL;
+  document.querySelectorAll("nav.tabs button").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === STATE.tab);
+  });
+  const main = $("#main");
+  main.innerHTML = "";
+
+  if (STATE.error === "config") {
+    main.innerHTML = configCard();
+    return;
+  }
+  if (STATE.error) {
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = STATE.error;
+    main.appendChild(t);
+  }
+  if (STATE.loading && !STATE.data) {
+    main.innerHTML += `<div class="card"><div class="empty">
+      <div class="skel" style="width:80%;margin:0 auto 12px"></div>
+      <div class="skel" style="width:60%;margin:0 auto 12px"></div>
+      <div class="skel" style="width:70%;margin:0 auto"></div>
+    </div></div>`;
+    return;
+  }
+  if (!STATE.data) return;
+
+  if (STATE.tab === "leaderboard") renderLeaderboard(main);
+  else if (STATE.tab === "picks") renderPicks(main);
+  else if (STATE.tab === "schedule") renderSchedule(main);
+  else if (STATE.tab === "rosters") renderRosters(main);
+  else if (STATE.tab === "outlook") renderOutlook(main);
+  else if (STATE.tab === "avgfinish") renderAvgFinish(main);
+  else if (STATE.tab === "mypick") renderMyPick(main);
+}
+
+function configCard() {
+  return `<div class="card config-card">
+    <h2>Setup needed</h2>
+    <p>Set <code>CONFIG.CSV_URL</code> in <code>index.html</code> to a published Google Sheet CSV URL.</p>
+    <ol>
+      <li>Open your Fantasy Golf spreadsheet in Google Sheets.</li>
+      <li>File → Share → <b>Publish to web</b>.</li>
+      <li>Choose the sheet, format <b>Comma-separated values (.csv)</b>, click Publish.</li>
+      <li>Copy the URL and paste it into <code>CONFIG.CSV_URL</code>.</li>
+      <li>Commit and push — refresh the app.</li>
+    </ol>
+  </div>`;
+}
+
+// ---------- Earnings chart ----------
+function fmtMoneyShort(n) {
+  if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1) + "M";
+  if (n >= 1_000) return "$" + Math.round(n / 1_000) + "K";
+  return "$" + n;
+}
+
+function niceYTicks(max, count) {
+  if (max <= 0) return [0];
+  const exp = Math.pow(10, Math.floor(Math.log10(max)));
+  const norm = max / exp;
+  let step;
+  if (norm <= 1) step = 0.2 * exp;
+  else if (norm <= 2) step = 0.5 * exp;
+  else if (norm <= 5) step = 1 * exp;
+  else step = 2 * exp;
+  const ticks = [];
+  for (let v = 0; v <= max + step * 0.5; v += step) ticks.push(Math.round(v));
+  return ticks;
+}
+
+function buildSeries(data) {
+  const { ranked } = computeStandings(data);
+  const playedWeeks = data.weeks
+    .filter(w => Object.values(w.picks).some(p => p))
+    .map(w => w.week)
+    .sort((a, b) => a - b);
+  const series = ranked.map(s => {
+    const byWeek = {};
+    for (const p of s.picks) byWeek[p.week] = (byWeek[p.week] || 0) + p.payout;
+    let running = 0;
+    const points = playedWeeks.map(wk => {
+      running += (byWeek[wk] || 0);
+      return { week: wk, value: running };
+    });
+    return { name: s.name, total: s.total, points };
+  });
+  const lastVals = series.map(s => s.points.length ? s.points[s.points.length - 1].value : 0);
+  const maxY = Math.max(1, ...lastVals);
+  return { series, weeks: playedWeeks, maxY };
+}
+
+// "Nice" axis ticks for an arbitrary [min, max] range (niceYTicks assumes 0-based).
+function rangeTicks(min, max, count) {
+  const span = Math.max(1, max - min);
+  const raw = span / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  const ticks = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) ticks.push(Math.round(v));
+  return ticks;
+}
+
+// Cumulative average finishing position per participant, week by week. Series are
+// kept in earnings-rank order so each person's colour matches the earnings chart.
+function buildAvgSeries(data) {
+  const { ranked } = computeStandings(data);
+  const playedWeeks = data.weeks
+    .filter(w => Object.values(w.picks).some(p => p))
+    .map(w => w.week)
+    .sort((a, b) => a - b);
+  const series = ranked.map(s => {
+    const byWeek = {};
+    for (const p of s.picks) byWeek[p.week] = p;
+    let sum = 0, count = 0;
+    const points = [];
+    for (const wk of playedWeeks) {
+      const p = byWeek[wk];
+      if (p && p.finish && String(p.finish).trim()) {
+        const pos = finishToPosition(p.finish, cutForWeek(wk, data));
+        if (pos != null) { sum += pos; count++; }
+      }
+      if (count >= 2) points.push({ week: wk, value: sum / count });   // start at 2nd scored pick — a single early pick is too noisy and stretches the axis
+    }
+    return { name: s.name, avg: count ? sum / count : null, points };
+  });
+  const allVals = series.flatMap(s => s.points.map(p => p.value));
+  if (!allVals.length) return { series, weeks: playedWeeks, yMin: 0, yMax: 1, yTicks: [] };
+  const yMin = Math.max(1, Math.floor(Math.min(...allVals) - 1));
+  const yMax = Math.ceil(Math.max(...allVals) + 1);
+  return { series, weeks: playedWeeks, yMin, yMax, yTicks: rangeTicks(yMin, yMax, 5) };
+}
+
+function renderEarningsChart(main) {
+  const data = STATE.data;
+  const { series, weeks, maxY } = buildSeries(data);
+
+  const card = document.createElement("div");
+  card.className = "card chart-card";
+
+  if (!weeks.length) {
+    card.innerHTML = `<div class="empty">Chart will appear once Week 1 picks are in.</div>`;
+    main.appendChild(card);
+    return;
+  }
+
+  card.innerHTML = `<div class="chart-title">Cumulative Earnings <span class="hint">tap a line to isolate</span></div><div class="chart-host"></div>`;
+  main.appendChild(card);
+
+  const host = card.querySelector(".chart-host");
+  // Defer to next frame so we can measure container width accurately.
+  drawChartInto(host, series, weeks, { yMax: maxY });
+}
+
+// ---------- Average Finish ----------
+function renderAvgFinish(main) {
+  const data = STATE.data;
+  const { series, weeks, yMin, yMax, yTicks } = buildAvgSeries(data);
+
+  const chart = document.createElement("div");
+  chart.className = "card chart-card";
+  if (!weeks.length || !yTicks.length) {
+    chart.innerHTML = `<div class="empty">Average Finish will appear once results are in.</div>`;
+    main.appendChild(chart);
+    return;
+  }
+  chart.innerHTML = `<div class="chart-title">Average Finish over time <span class="hint">lower is better · tap a line to isolate</span></div><div class="chart-host"></div>`;
+  main.appendChild(chart);
+  drawChartInto(chart.querySelector(".chart-host"), series, weeks, {
+    yMin, yMax, yTicks, invert: true, yLabel: v => String(Math.round(v))
+  });
+
+  // Ranking — best (lowest) average finish first.
+  const { ranked } = computeStandings(data);
+  const rows = ranked.filter(s => s.avgPosition != null).sort((a, b) => a.avgPosition - b.avgPosition);
+  const anyMissing = ranked.some(s => s.posMissingCut);
+  const table = document.createElement("div");
+  table.className = "card";
+  table.innerHTML = `
+    <div class="week-title">Average Finish</div>
+    <div class="outlook-wrap"><table class="outlook-table">
+      <thead><tr><th>#</th><th>Player</th><th class="num">Average</th><th class="num">Picks</th></tr></thead>
+      <tbody>${rows.map((s, i) => `
+        <tr>
+          <td class="wk">${i + 1}</td>
+          <td>${escape(s.name)}</td>
+          <td class="num">${s.avgPosition.toFixed(1)}${s.posMissingCut ? "*" : ""}</td>
+          <td class="num">${s.posCount}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table></div>
+    ${anyMissing ? `<div class="outlook-note">* Leaves out a few missed-cut picks whose cut size isn't in yet.</div>` : ""}
+    <div class="outlook-note">Each participant's average finishing position across their scored picks — <b>lower is better</b>. A missed cut counts as one worse than the number who made the cut.</div>`;
+  main.appendChild(table);
+}
+
+// opts: { yMax, yMin=0, invert=false, yLabel=fmtMoneyShort, yTicks? }
+// invert=true puts small values at the top (used by Average Finish, where lower is better).
+function drawChartInto(host, series, weeks, opts) {
+  opts = opts || {};
+  const yMin = opts.yMin || 0;
+  const maxY = opts.yMax;
+  const invert = !!opts.invert;
+  const yLabel = opts.yLabel || fmtMoneyShort;
+
+  const W = Math.max(280, host.clientWidth || 360);
+  const H = 240;
+  const PAD = { top: 14, right: 64, bottom: 26, left: 44 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  const xOf = wk => {
+    if (weeks.length === 1) return PAD.left + plotW / 2;
+    const i = weeks.indexOf(wk);
+    return PAD.left + (i / (weeks.length - 1)) * plotW;
+  };
+  const yOf = v => {
+    const frac = (v - yMin) / (maxY - yMin);
+    return invert ? PAD.top + frac * plotH : PAD.top + plotH - frac * plotH;
+  };
+
+  const yTicks = opts.yTicks || niceYTicks(maxY, 5).filter(t => t <= maxY * 1.001);
+  // X-axis ticks: every Nth week, plus always include the last week — but drop the
+  // previous tick if it would crowd the last one (within 32px).
+  const xTickInterval = Math.max(1, Math.ceil(weeks.length / 6));
+  let xTicks = weeks.filter((_, i) => i % xTickInterval === 0);
+  const lastWk = weeks[weeks.length - 1];
+  if (!xTicks.includes(lastWk)) xTicks.push(lastWk);
+  xTicks = xTicks.filter((wk, i, arr) => {
+    const next = arr[i + 1];
+    if (!next) return true;
+    return xOf(next) - xOf(wk) > 32;
+  });
+
+  const isolated = STATE.expandedRow;
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" width="100%" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // Y gridlines + labels
+  for (const t of yTicks) {
+    const y = yOf(t);
+    svg += `<line class="chart-axis" x1="${PAD.left}" x2="${W - PAD.right}" y1="${y}" y2="${y}" />`;
+    svg += `<text class="chart-axis-label" x="${PAD.left - 6}" y="${y + 4}" text-anchor="end">${yLabel(t)}</text>`;
+  }
+  // X labels
+  for (const wk of xTicks) {
+    const x = xOf(wk);
+    svg += `<text class="chart-axis-label" x="${x}" y="${H - 8}" text-anchor="middle">W${wk}</text>`;
+  }
+  // Lines (back to front: lowest rank first so 1st place draws on top)
+  series.slice().reverse().forEach((s) => {
+    const idx = series.indexOf(s);
+    const points = s.points.map(p => `${xOf(p.week)},${yOf(p.value)}`).join(" ");
+    const dim = isolated && isolated !== s.name;
+    svg += `<polyline class="chart-line${dim ? " dim" : ""}" points="${points}" stroke="var(--c${idx + 1})" />`;
+  });
+  // End-of-line dots + labels with vertical de-overlap.
+  // Compute each line's last-point coords first, then slide labels apart so they
+  // don't stack on each other when totals are similar (e.g. Gavin & Ankith).
+  const ends = series.map((s, idx) => {
+    const last = s.points[s.points.length - 1];
+    if (!last) return null;
+    const x = xOf(last.week);
+    const dotY = yOf(last.value);
+    return { idx, name: s.name, x, dotY, labelY: dotY };
+  }).filter(Boolean);
+  // Sort by dotY ascending and force MIN_GAP between consecutive label positions.
+  const MIN_GAP = 14;
+  ends.sort((a, b) => a.dotY - b.dotY);
+  for (let i = 1; i < ends.length; i++) {
+    if (ends[i].labelY - ends[i - 1].labelY < MIN_GAP) {
+      ends[i].labelY = ends[i - 1].labelY + MIN_GAP;
+    }
+  }
+  // If we pushed past the bottom of the plot, walk back upward to fit.
+  const bottom = PAD.top + plotH - 2;
+  if (ends.length && ends[ends.length - 1].labelY > bottom) {
+    ends[ends.length - 1].labelY = bottom;
+    for (let i = ends.length - 2; i >= 0; i--) {
+      if (ends[i + 1].labelY - ends[i].labelY < MIN_GAP) {
+        ends[i].labelY = ends[i + 1].labelY - MIN_GAP;
+      }
+    }
+  }
+  for (const e of ends) {
+    const s = series[e.idx];
+    const dim = isolated && isolated !== s.name;
+    const colorVar = `var(--c${e.idx + 1})`;
+    svg += `<circle class="chart-dot${dim ? " dim" : ""}" cx="${e.x}" cy="${e.dotY}" r="3.5" fill="${colorVar}" />`;
+    if (Math.abs(e.labelY - e.dotY) > 2) {
+      // thin connector from dot to shifted label, half opacity
+      svg += `<line class="chart-line${dim ? " dim" : ""}" x1="${e.x + 2}" y1="${e.dotY}" x2="${e.x + 6}" y2="${e.labelY - 2}" stroke="${colorVar}" stroke-width="1" stroke-opacity="0.55" />`;
+    }
+    const display = s.name.length > 8 ? s.name.slice(0, 7) + "…" : s.name;
+    svg += `<text class="chart-label${dim ? " dim" : ""}" x="${e.x + 8}" y="${e.labelY + 3}" fill="${colorVar}">${escape(display)}</text>`;
+  }
+  svg += `</svg>`;
+
+  host.innerHTML = svg;
+
+  // Tap-on-line: nearest-line hit test in pixel space
+  const svgEl = host.querySelector("svg");
+  svgEl.addEventListener("click", (ev) => {
+    const rect = svgEl.getBoundingClientRect();
+    const sx = W / rect.width;
+    const sy = H / rect.height;
+    const px = (ev.clientX - rect.left) * sx;
+    const py = (ev.clientY - rect.top) * sy;
+    let nearest = null, best = Infinity;
+    for (const s of series) {
+      if (!s.points.length) continue;
+      const pts = s.points;
+      let yAt;
+      if (pts.length === 1) {
+        yAt = yOf(pts[0].value);
+      } else {
+        // find bracketing pair
+        let foundY = null;
+        for (let j = 0; j < pts.length - 1; j++) {
+          const x1 = xOf(pts[j].week), x2 = xOf(pts[j + 1].week);
+          if (px >= x1 && px <= x2) {
+            const t = x2 === x1 ? 0 : (px - x1) / (x2 - x1);
+            foundY = yOf(pts[j].value + t * (pts[j + 1].value - pts[j].value));
+            break;
+          }
+        }
+        if (foundY == null) {
+          foundY = px < xOf(pts[0].week)
+            ? yOf(pts[0].value)
+            : yOf(pts[pts.length - 1].value);
+        }
+        yAt = foundY;
+      }
+      const d = Math.abs(py - yAt);
+      if (d < best) { best = d; nearest = s.name; }
+    }
+    // Hit threshold of ~24px in SVG units (~ touch finger)
+    if (nearest && best < 24) {
+      STATE.expandedRow = STATE.expandedRow === nearest ? null : nearest;
+    } else {
+      STATE.expandedRow = null;
+    }
+    render();
+  });
+}
+
+// ---------- Leaderboard ----------
+function renderLeaderboard(main) {
+  renderEarningsChart(main);
+  const { ranked } = computeStandings(STATE.data);
+  const card = document.createElement("div");
+  card.className = "card";
+  ranked.forEach((s, i) => {
+    const rank = i + 1;
+    const row = document.createElement("div");
+    row.className = "lb-row" + (rank === 1 ? " rank-1" : "") + (STATE.expandedRow === s.name ? " expanded" : "");
+    row.innerHTML = `
+      <div class="rank">${rank}</div>
+      <div>
+        <div class="name">${escape(s.name)}</div>
+        <div class="sub">${s.winners} winner${s.winners === 1 ? "" : "s"} · ${s.creditsRemaining} credit${s.creditsRemaining === 1 ? "" : "s"}</div>
+      </div>
+      <div class="total">${fmtMoney(s.total)}</div>
+    `;
+    row.addEventListener("click", () => {
+      STATE.expandedRow = STATE.expandedRow === s.name ? null : s.name;
+      render();
+    });
+    card.appendChild(row);
+    if (STATE.expandedRow === s.name) {
+      const det = document.createElement("div");
+      det.className = "lb-detail";
+      const sortedPicks = [...s.picks].sort((a, b) => a.week - b.week);
+      det.innerHTML = `<table>${sortedPicks.map(p => isWeekHidden(p.week, STATE.data) ? `
+        <tr>
+          <td class="wk">W${p.week}</td>
+          <td class="golfer" style="color:var(--text-dim)">🔒 Pick hidden until deadline</td>
+          <td class="pay zero">—</td>
+        </tr>` : `
+        <tr>
+          <td class="wk">W${p.week}</td>
+          <td class="golfer">${escape(p.golfer)}${p.isWinner ? '<span class="badge gold">WIN</span>' : ""} <span style="color:var(--text-dim);font-size:11px">(${escape(p.finish || "—")})</span></td>
+          <td class="pay${p.payout ? "" : " zero"}">${p.payout ? fmtMoney(p.payout) : "—"}</td>
+        </tr>`).join("")}</table>`;
+      card.appendChild(det);
+    }
+  });
+  main.appendChild(card);
+}
+
+// ---------- Weekly Picks ----------
+function renderPicks(main) {
+  const { weeks } = STATE.data;
+  const playedWeeks = weeks.filter(w => Object.values(w.picks).some(p => p));
+  if (!playedWeeks.length) {
+    main.innerHTML = `<div class="card"><div class="empty">No picks recorded yet.</div></div>`;
+    return;
+  }
+  const wkIdx = playedWeeks.findIndex(w => w.week === STATE.pickWeek);
+  const idx = wkIdx >= 0 ? wkIdx : playedWeeks.length - 1;
+  const wk = playedWeeks[idx];
+
+  const bar = document.createElement("div");
+  bar.className = "week-bar";
+  bar.innerHTML = `
+    <button class="nav-btn" id="prevWk" ${idx === 0 ? "disabled" : ""}>‹</button>
+    <select id="weekSel">${playedWeeks.map(w => `<option value="${w.week}" ${w.week === wk.week ? "selected" : ""}>W${w.week} · ${escape(w.event)}</option>`).join("")}</select>
+    <button class="nav-btn" id="nextWk" ${idx === playedWeeks.length - 1 ? "disabled" : ""}>›</button>
+  `;
+  main.appendChild(bar);
+  bar.querySelector("#weekSel").addEventListener("change", e => {
+    STATE.pickWeek = parseInt(e.target.value, 10);
+    render();
+  });
+  bar.querySelector("#prevWk").addEventListener("click", () => {
+    if (idx > 0) { STATE.pickWeek = playedWeeks[idx - 1].week; render(); }
+  });
+  bar.querySelector("#nextWk").addEventListener("click", () => {
+    if (idx < playedWeeks.length - 1) { STATE.pickWeek = playedWeeks[idx + 1].week; render(); }
+  });
+
+  const card = document.createElement("div");
+  card.className = "card";
+  const hidden = isWeekHidden(wk.week, STATE.data);
+  const sched = STATE.data.schedule && STATE.data.schedule[wk.week];
+  const deadline = sched && sched.deadline;
+  const winner = tournamentWinner(wk);
+  const liveWeek = getLiveWeek(STATE.data);
+  const isLive = !hidden && liveWeek === wk.week && STATE.data.live && !STATE.data.live.completed;
+  const finalUnsynced = liveWeek === wk.week && STATE.data.live && STATE.data.live.completed;
+  const liveByName = (STATE.data.live && STATE.data.live.byName) || {};
+  const titleSuffix = hidden
+    ? ` · <span class="chip">🔒 Picks hidden until ${escape(fmtDeadline(deadline))}</span>`
+    : winner
+    ? ` · Winner: <strong>${escape(winner.golfer)}</strong>`
+    : (isLive ? ` · <span class="live-pill">LIVE</span>` : "");
+  card.innerHTML = `<div class="week-title">Week ${wk.week} · <strong>${escape(wk.event)}</strong>${titleSuffix}</div>`;
+  // Sort: paid > live (lower position = better) > unpaid > unpicked
+  const livePosNum = name => {
+    const k = (name || "").toLowerCase();
+    const e = liveByName[k];
+    if (!e) return Infinity;
+    const m = (e.position || "").match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : Infinity;
+  };
+  // Before the deadline everything's $0/hidden, so keep the plain participant order
+  // and don't sort by golfer (which would leak nothing but adds no value).
+  const order = hidden
+    ? STATE.data.participants.map(name => ({ name, pick: wk.picks[name] }))
+    : STATE.data.participants
+      .map(name => ({ name, pick: wk.picks[name] }))
+      .sort((a, b) => {
+        const ap = (a.pick && a.pick.payout) || 0, bp = (b.pick && b.pick.payout) || 0;
+        if (bp !== ap) return bp - ap;
+        // Tie on payout: when nobody's been paid yet, sort by live position (lower is better)
+        const al = a.pick ? livePosNum(a.pick.golfer) : Infinity;
+        const bl = b.pick ? livePosNum(b.pick.golfer) : Infinity;
+        return al - bl;
+      });
+  for (const { name, pick } of order) {
+    const row = document.createElement("div");
+    row.className = "pick-row" + (!hidden && pick && pick.finish === "1" ? " winner" : "");
+    if (hidden) {
+      row.innerHTML = pick
+        ? `<div><div class="who">${escape(name)}</div><div><span class="chip live">✓ Picked</span></div></div><div class="pay zero" title="Hidden until the deadline">🔒</div>`
+        : `<div><div class="who">${escape(name)}</div><div class="golfer" style="color:var(--text-dim)">No pick yet</div></div><div class="pay zero">—</div>`;
+    } else if (!pick) {
+      row.innerHTML = `<div><div class="who">${escape(name)}</div><div class="golfer" style="color:var(--text-dim)">No pick</div></div><div class="pay zero">—</div>`;
+    } else {
+      const live = liveByName[(pick.golfer || "").toLowerCase()];
+      // Right-side cell logic:
+      //   If we have a real payout: show payout (final state).
+      //   Else if live data has the golfer: show "<score> <position>".
+      //   Else: "—".
+      let rightCell;
+      if (pick.payout) {
+        rightCell = `<div class="pay">${fmtMoney(pick.payout)}</div>`;
+      } else if (live) {
+        const scoreText = live.score || "—";
+        const posText = live.position ? ` <span class="live-pos">${escape(live.position)}</span>` : "";
+        const liveBadge = isLive ? "" : (finalUnsynced ? '<span class="live-badge">FINAL</span>' : '<span class="live-badge">LIVE</span>');
+        rightCell = `<div class="live-score">${escape(scoreText)}${posText}${liveBadge}</div>`;
+      } else {
+        rightCell = `<div class="pay zero">—</div>`;
+      }
+      row.innerHTML = `
+        <div>
+          <div class="who">${escape(name)}</div>
+          <div><span class="golfer">${escape(pick.golfer)}</span><span class="finish">(${escape(pick.finish || "—")})</span></div>
+        </div>
+        ${rightCell}
+      `;
+    }
+    card.appendChild(row);
+  }
+  main.appendChild(card);
+}
+
+// ---------- Schedule ----------
+function renderSchedule(main) {
+  const { weeks } = STATE.data;
+  const byWeek = {};
+  for (const w of weeks) byWeek[w.week] = w;
+  const card = document.createElement("div");
+  card.className = "card";
+  for (let n = 1; n <= CONFIG.TOTAL_WEEKS; n++) {
+    const w = byWeek[n];
+    if (!w) continue;
+    const winner = tournamentWinner(w);
+    const hasPicks = Object.values(w.picks).some(p => p);
+    const row = document.createElement("div");
+    row.className = "sched-row" + (hasPicks ? "" : " future");
+    row.innerHTML = `
+      <div class="wk">W${w.week}</div>
+      <div>
+        <div class="ev">${escape(w.event)}</div>
+        ${winner ? `<div class="winner">Won by <b>${escape(winner.golfer)}</b> · picked by ${winner.pickedBy.map(escape).join(", ")}</div>` : (hasPicks ? `<div class="winner">No participant picked the winner</div>` : `<div class="winner">—</div>`)}
+      </div>
+    `;
+    card.appendChild(row);
+  }
+  main.appendChild(card);
+}
+
+// ---------- Outlook (end-of-season projections) ----------
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function renderOutlook(main) {
+  const o = computeOutlook(STATE.data);
+
+  if (o.M === 0 || o.R === 0) {
+    main.innerHTML = `<div class="card"><div class="empty">
+      No projected payouts yet. On the <b>Schedule</b> tab, add finishing-position payout
+      columns to the right of <b>Deadline</b> for the closing tournaments — header cells
+      <b>1, 2, 3…</b> (the place) and body cells the prize money (e.g. <b>$3,600,000</b>).
+      The <b>1st</b> column is what powers these projections.
+    </div></div>`;
+    return;
+  }
+
+  // Union of positions present across remaining weeks, capped so the table stays mobile-friendly.
+  const positions = Array.from(new Set(o.remaining.flatMap(r => Object.keys(r.payouts).map(Number))))
+    .sort((a, b) => a - b).slice(0, 4);
+
+  // ---- Remaining purses ----
+  const purse = document.createElement("div");
+  purse.className = "card";
+  purse.innerHTML = `
+    <div class="week-title">Still on the table · <strong>${fmtMoney(o.R)}</strong> in winner money over ${o.M} event${o.M === 1 ? "" : "s"}</div>
+    <div class="outlook-wrap"><table class="outlook-table">
+      <thead><tr><th>Wk</th><th>Event</th>${positions.map(p => `<th class="num">${ordinal(p)}</th>`).join("")}</tr></thead>
+      <tbody>${o.remaining.map(r => `
+        <tr>
+          <td class="wk">W${r.week}</td>
+          <td>${escape(r.event)}</td>
+          ${positions.map(p => `<td class="num">${r.payouts[p] ? fmtMoneyShort(r.payouts[p]) : "—"}</td>`).join("")}
+        </tr>`).join("")}
+      </tbody>
+    </table></div>`;
+  main.appendChild(purse);
+
+  // ---- The chase (one consolidated table + a dynamic one-liner) ----
+  const chip = p => {
+    if (p.clinchedTitle) return `<span class="chip gold">🏆 Clinched</span>`;
+    if (!p.isLeader && !p.canWin) return `<span class="chip">Out of 1st</span>`;
+    return "";   // no chip for the ordinary "still alive" case — keeps the table clean
+  };
+  const chase = document.createElement("div");
+  chase.className = "card";
+  chase.innerHTML = `
+    <div class="week-title">The chase</div>
+    <div class="outlook-wrap"><table class="outlook-table">
+      <thead><tr><th>#</th><th>Player</th><th class="num">Total</th><th class="num">Back</th><th class="num">Max</th><th></th></tr></thead>
+      <tbody>${o.players.map(p => `
+        <tr>
+          <td class="wk">${p.rank}</td>
+          <td>${escape(p.name)}</td>
+          <td class="num">${fmtMoneyShort(p.current)}</td>
+          <td class="num">${p.isLeader ? "—" : fmtMoneyShort(p.gapToLead)}</td>
+          <td class="num">${fmtMoneyShort(p.ceiling)}</td>
+          <td>${chip(p)}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table></div>
+    <div class="outlook-note" style="font-size:12px;color:var(--text)">${raceSummary(o)}</div>
+    <div class="outlook-note"><b>Back</b> = behind 1st. <b>Max</b> = today's total plus winning every remaining event. Scores add up independently, so reaching 1st also needs the leader to cool off.</div>`;
+  main.appendChild(chase);
+}
+
+// One dynamic sentence summarizing the state of the title race, so the per-player
+// verdict isn't repeated 7 times when (as often happens with a huge finale) it's
+// identical for everyone.
+function raceSummary(o) {
+  const players = o.players;
+  const spread = players[0].current - players[players.length - 1].current;
+  const big = o.remaining.reduce((a, r) => r.winnerPayout > a.winnerPayout ? r : a, { winnerPayout: 0, event: "" });
+  const eliminated = players.filter(p => !p.isLeader && !p.canWin);
+  if (!eliminated.length) {
+    return `All ${players.length} are still alive for 1st — ${fmtMoney(o.R)} in winner money remains, and one ${escape(big.event)} win (${fmtMoney(big.winnerPayout)}) outweighs the ${fmtMoney(spread)} spread from top to bottom.`;
+  }
+  const alive = players.length - eliminated.length;
+  const names = eliminated.map(p => escape(p.name)).join(", ");
+  return `${alive} still alive for 1st. ${names} ${eliminated.length === 1 ? "is" : "are"} mathematically out — even winning all ${o.M} remaining wouldn't be enough.`;
+}
+
+// ---------- Rosters & Reuse ----------
+function renderRosters(main) {
+  const { ranked } = computeStandings(STATE.data);
+  for (const s of ranked) {
+    const card = document.createElement("div");
+    card.className = "card roster-card";
+    const sortedPicks = [...s.picks].sort((a, b) => a.week - b.week);
+    const golferFirstWeek = {};
+    for (const p of sortedPicks) {
+      if (golferFirstWeek[p.golfer] == null) golferFirstWeek[p.golfer] = p.week;
+    }
+    const items = sortedPicks.map(p => {
+      if (isWeekHidden(p.week, STATE.data)) {
+        // Don't reveal the golfer (or a Reusable/Locked tag that could hint) until the deadline.
+        return `
+          <div class="wk">W${p.week}</div>
+          <div class="gf" style="color:var(--text-dim)">🔒 Hidden until deadline</div>
+          <div class="fn"></div>
+          <div><span class="tag">Picked</span></div>
+        `;
+      }
+      let tag = "";
+      if (p.isWinner) tag = `<span class="tag winner">Winner</span>`;
+      else {
+        // Reusable iff first appearance was on/before latestWinnerWeek and there are credits left
+        const eligible = golferFirstWeek[p.golfer] <= s.latestWinnerWeek;
+        const hasCredits = s.creditsRemaining > 0;
+        const reusable = eligible && hasCredits && s.latestWinnerWeek > 0;
+        tag = reusable
+          ? `<span class="tag reusable">Reusable</span>`
+          : `<span class="tag locked">Locked</span>`;
+      }
+      return `
+        <div class="wk">W${p.week}</div>
+        <div class="gf">${escape(p.golfer)}</div>
+        <div class="fn">${escape(p.finish || "—")}${p.payout ? " · " + fmtMoney(p.payout) : ""}</div>
+        <div>${tag}</div>
+      `;
+    }).join("");
+    card.innerHTML = `
+      <div class="roster-head">
+        <div class="nm">${escape(s.name)}</div>
+        <div class="sm">${fmtMoney(s.total)}</div>
+      </div>
+      <div class="roster-summary">
+        <span><b>${s.picks.length}</b> picks</span>
+        <span><b>${s.winners}</b> winner${s.winners === 1 ? "" : "s"}</span>
+        <span><b>${s.creditsRemaining}</b> credit${s.creditsRemaining === 1 ? "" : "s"} remaining</span>
+        <span><b>${s.reusesSpent}</b> reuse${s.reusesSpent === 1 ? "" : "s"} spent</span>
+        ${s.avgPosition != null ? `<span><b>${s.avgPosition.toFixed(1)}${s.posMissingCut ? "*" : ""}</b> average finish</span>` : ""}
+      </div>
+      <div class="roster-list">${items || `<div class="empty" style="grid-column:1/-1">No picks yet.</div>`}</div>
+    `;
+    main.appendChild(card);
+  }
+}
+
+// ---------- My Pick ----------
+function openWeeks(data) {
+  // Weeks where there's a deadline in the future
+  const now = new Date();
+  const out = [];
+  for (let n = 1; n <= CONFIG.TOTAL_WEEKS; n++) {
+    const s = data.schedule && data.schedule[n];
+    if (s && s.deadline && s.deadline > now) {
+      const wk = data.weeks.find(w => w.week === n);
+      out.push({ week: n, event: s.event || (wk && wk.event) || `Week ${n}`, deadline: s.deadline });
+    }
+  }
+  return out;
+}
+
+function golferSuggestions(data, week) {
+  // Build a merged list: field for this week first (sorted), then any
+  // historical golfers not already in the field (sorted). This handles the
+  // common case where ESPN's field is sparse early in the week — you still
+  // see plenty of options to scroll through.
+  const fieldList = (week != null && data.field && data.field[week] && data.field[week].length)
+    ? data.field[week].slice().sort()
+    : [];
+  const seen = new Set(fieldList.map(g => g.toLowerCase()));
+  const history = [];
+  for (const w of data.weeks) {
+    for (const p of Object.values(w.picks)) {
+      if (!p || !p.golfer) continue;
+      const k = p.golfer.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      history.push(p.golfer);
+    }
+  }
+  history.sort();
+  return [...fieldList, ...history];
+}
+
+// Filter a golfer list against a query. Prefix matches first, then substring,
+// up to 30 results. Empty query returns the first 30 names as-is.
+function filterGolfers(query, list) {
+  if (!list || !list.length) return [];
+  if (!query) return list; // empty query = full scrollable list
+  const q = query.toLowerCase();
+  const prefix = [];
+  const substring = [];
+  for (const g of list) {
+    const lg = g.toLowerCase();
+    if (lg.startsWith(q)) prefix.push(g);
+    else if (lg.includes(q)) substring.push(g);
+  }
+  return prefix.concat(substring).slice(0, 50);
+}
+
+// Render the dropdown rows for a given query + suggestion list. Highlights
+// the matched substring in each row so the user sees why each one matched.
+function renderACDropdown(host, query, suggestions) {
+  const matches = filterGolfers(query, suggestions);
+  if (!matches.length) {
+    host.innerHTML = `<div class="ac-empty">${query ? "No matches" : "No suggestions yet"}</div>`;
+    return;
+  }
+  const q = (query || "").toLowerCase();
+  host.innerHTML = matches.map(g => {
+    let display = escape(g);
+    if (q) {
+      const lg = g.toLowerCase();
+      const i = lg.indexOf(q);
+      if (i >= 0) {
+        display = escape(g.slice(0, i)) + `<span class="match">${escape(g.slice(i, i + q.length))}</span>` + escape(g.slice(i + q.length));
+      }
+    }
+    return `<button type="button" class="ac-row" data-golfer="${escape(g)}">${display}</button>`;
+  }).join("");
+}
+
+// Returns null if no field is published for this week, or the golfer is in it.
+// Otherwise returns a short reason string for the soft-warn callout.
+function fieldSoftWarn(data, week, golfer, eventName) {
+  golfer = (golfer || "").trim();
+  if (!golfer) return null;
+  const field = data.field && data.field[week];
+  if (!field || !field.length) return null;
+  const lower = golfer.toLowerCase();
+  // Try forgiving match: case-insensitive, fall back to last-name suffix match
+  const exact = field.some(g => g.toLowerCase() === lower);
+  if (exact) return null;
+  const fuzzy = field.some(g => {
+    const a = g.toLowerCase().replace(/[^a-z]/g, "");
+    const b = lower.replace(/[^a-z]/g, "");
+    return a === b;
+  });
+  if (fuzzy) return null;
+  const suffix = eventName ? ` ${eventName}` : "";
+  return `${golfer} isn't in the${suffix} field — double-check before submitting.`;
+}
+
+function fmtDeadline(d) {
+  if (!d) return "—";
+  return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function renderMyPick(main) {
+  const data = STATE.data;
+  const F = STATE.form;
+  const open = openWeeks(data);
+  if (F.week == null && open.length) F.week = open[0].week;
+
+  // Last submit confirmation banner
+  if (STATE.formStatus) {
+    const b = document.createElement("div");
+    b.className = STATE.formStatus.type === "ok" ? "success-banner" : "toast";
+    b.textContent = STATE.formStatus.message;
+    main.appendChild(b);
+  }
+
+  if (open.length === 0) {
+    main.innerHTML += `<div class="card"><div class="empty">No weeks open for picks. The admin sets per-week deadlines in the Schedule tab of the spreadsheet.</div></div>`;
+    return;
+  }
+
+  // Live validation against current form values
+  const validation = canPick(F.name, F.week, F.golfer, data);
+  const formStats = (F.name && data.schedule)
+    ? (() => {
+        const s = computeStandings(data).stats[F.name];
+        return s ? { total: s.total, winners: s.winners, credits: s.creditsRemaining } : null;
+      })()
+    : null;
+  const wkInfo = open.find(w => w.week === F.week) || open[0];
+  const existing = (F.name && data) ? (computeStandings(data).stats[F.name]?.picks.find(p => p.week === F.week)) : null;
+
+  const card = document.createElement("div");
+  card.className = "card form-card";
+  card.innerHTML = `
+    <h2>Submit your pick</h2>
+    ${formStats ? `<div class="status-panel">
+      <div class="row"><span>Earnings</span><b>${fmtMoney(formStats.total)}</b></div>
+      <div class="row"><span>Winners picked</span><b>${formStats.winners}</b></div>
+      <div class="row"><span>Reuse credits remaining</span><b>${formStats.credits}</b></div>
+      <div class="verdict ${F.golfer ? (validation.ok ? "ok" : "err") : "idle"}">
+        ${F.golfer ? (validation.ok ? "✓ " + (validation.info || "Pick is allowed.") : "✕ " + validation.error) : "Type a golfer to check."}
+      </div>
+    </div>` : ""}
+
+    <div class="field">
+      <label for="pickName">Your name</label>
+      <select id="pickName">
+        <option value="">— Select —</option>
+        ${data.participants.map(n => `<option value="${escape(n)}" ${n === F.name ? "selected" : ""}>${escape(n)}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="pickPin">PIN</label>
+      <input id="pickPin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" value="${escape(F.pin)}" placeholder="••••" />
+    </div>
+
+    <div class="field">
+      <label for="pickWeek">Week</label>
+      <select id="pickWeek">
+        ${open.map(w => `<option value="${w.week}" ${w.week === F.week ? "selected" : ""}>Week ${w.week} · ${escape(w.event)}</option>`).join("")}
+      </select>
+      <div class="hint">Deadline: ${fmtDeadline(wkInfo.deadline)}</div>
+    </div>
+
+    <div class="field">
+      <label for="pickGolfer">Golfer</label>
+      <div class="ac-wrap">
+        <input id="pickGolfer" type="text" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false"
+               value="${escape(F.golfer)}" placeholder="e.g. Scottie Scheffler" />
+        <div class="ac-dropdown" id="pickGolferAC" hidden></div>
+      </div>
+      <div class="warn" id="pickFieldWarn" hidden></div>
+      ${existing ? `<div class="hint">Currently picked: <b>${escape(existing.golfer)}</b> — submitting will replace this.</div>` : ""}
+    </div>
+
+    <button class="submit-btn" id="pickSubmit" ${(!F.name || !F.pin || !F.golfer || !validation.ok || STATE.submitting) ? "disabled" : ""}>
+      ${STATE.submitting ? "Submitting…" : (existing ? "Update pick" : "Submit pick")}
+    </button>
+  `;
+  main.appendChild(card);
+
+  // Wire input events without re-rendering on every keystroke (would lose focus).
+  // We re-render on blur/change for selects + on debounced input for golfer.
+  const $name = card.querySelector("#pickName");
+  const $pin = card.querySelector("#pickPin");
+  const $week = card.querySelector("#pickWeek");
+  const $golfer = card.querySelector("#pickGolfer");
+  const $btn = card.querySelector("#pickSubmit");
+
+  // Surgical updates: do NOT re-render the form for input events — that destroys
+  // the focused input and Safari restores focus to a different field.
+  function refreshLive() {
+    const v = canPick(F.name, F.week, F.golfer, data);
+    const verdict = card.querySelector(".verdict");
+    if (verdict) {
+      verdict.classList.remove("ok", "err", "idle");
+      if (!F.golfer) {
+        verdict.classList.add("idle");
+        verdict.textContent = "Type a golfer to check.";
+      } else if (v.ok) {
+        verdict.classList.add("ok");
+        verdict.textContent = "✓ " + (v.info || "Pick is allowed.");
+      } else {
+        verdict.classList.add("err");
+        verdict.textContent = "✕ " + v.error;
+      }
+    }
+    // Field soft-warn (independent of canPick verdict; only when reuse rules pass)
+    const warn = card.querySelector("#pickFieldWarn");
+    if (warn) {
+      const eventName = (data.schedule && data.schedule[F.week] && data.schedule[F.week].event) || "";
+      const msg = fieldSoftWarn(data, F.week, F.golfer, eventName);
+      if (msg && v.ok) {
+        warn.textContent = "⚠ " + msg;
+        warn.hidden = false;
+      } else {
+        warn.hidden = true;
+      }
+    }
+    $btn.disabled = !F.name || !F.pin || !F.golfer || !v.ok || STATE.submitting;
+    $btn.textContent = STATE.submitting ? "Submitting…" : (v.isEdit ? "Update pick" : "Submit pick");
+  }
+  // Run once on render so warn is correct for any pre-filled value.
+  refreshLive();
+
+  // Name and week changes refresh enough other panels (stats, deadline) that a
+  // re-render is fine — these are <select>s, so they fire once per selection
+  // (not per keystroke) and the user doesn't lose focus mid-typing.
+  $name.addEventListener("change", () => {
+    F.name = $name.value;
+    if (F.name) localStorage.setItem("fg_name", F.name);
+    STATE.formStatus = null;
+    render();
+  });
+  $week.addEventListener("change", () => { F.week = parseInt($week.value, 10); STATE.formStatus = null; render(); });
+
+  // Pin and golfer update in place — no re-render, no focus loss.
+  $pin.addEventListener("input", () => { F.pin = $pin.value; refreshLive(); });
+
+  // -------- Custom golfer autocomplete --------
+  const $ac = card.querySelector("#pickGolferAC");
+  const suggestions = golferSuggestions(data, F.week);
+
+  function showAC(query) {
+    renderACDropdown($ac, query, suggestions);
+    $ac.hidden = false;
+  }
+  function hideAC() { $ac.hidden = true; }
+
+  $golfer.addEventListener("input", () => {
+    F.golfer = $golfer.value;
+    showAC(F.golfer);
+    refreshLive();
+  });
+  $golfer.addEventListener("focus", () => {
+    showAC($golfer.value);
+    // Scroll the input toward the top so the dropdown has room above the keyboard.
+    // Tiny delay lets the keyboard begin animating in first.
+    setTimeout(() => {
+      try { $golfer.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) {}
+    }, 150);
+  });
+  // Use mousedown (fires before blur) so we don't lose the click target.
+  $ac.addEventListener("mousedown", (ev) => {
+    const btn = ev.target.closest(".ac-row");
+    if (!btn) return;
+    ev.preventDefault();
+    const picked = btn.dataset.golfer;
+    F.golfer = picked;
+    $golfer.value = picked;
+    hideAC();
+    refreshLive();
+  });
+  // Hide dropdown when focus leaves the input *and* the dropdown.
+  // Small delay so a tap on a row registers before hide.
+  $golfer.addEventListener("blur", () => setTimeout(hideAC, 150));
+  // Tap outside the wrap also hides.
+  document.addEventListener("click", (ev) => {
+    if (!card.contains(ev.target)) hideAC();
+  });
+
+  $btn.addEventListener("click", () => submitPick());
+}
+
+async function submitPick() {
+  const F = STATE.form;
+  const v = canPick(F.name, F.week, F.golfer, STATE.data);
+  if (!v.ok) {
+    STATE.formStatus = { type: "err", message: v.error };
+    render();
+    return;
+  }
+  if (!CONFIG.SUBMIT_URL) {
+    STATE.formStatus = { type: "err", message: "SUBMIT_URL is not configured." };
+    render();
+    return;
+  }
+  STATE.submitting = true;
+  STATE.formStatus = null;
+  render();
+  try {
+    // text/plain body sidesteps CORS preflight on Apps Script Web Apps
+    const res = await fetch(CONFIG.SUBMIT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        participant: F.name,
+        pin: F.pin,
+        week: F.week,
+        golfer: F.golfer.trim()
+      }),
+      redirect: "follow"
+    });
+    const json = await res.json();
+    STATE.submitting = false;
+    if (json.ok) {
+      STATE.formStatus = { type: "ok", message: json.message || "Pick saved." };
+      F.golfer = "";
+      F.pin = "";
+      render();
+      // Re-fetch the league data so the new pick shows up across tabs
+      loadData();
+    } else {
+      STATE.formStatus = { type: "err", message: json.error || "Submission rejected." };
+      render();
+    }
+  } catch (err) {
+    STATE.submitting = false;
+    STATE.formStatus = { type: "err", message: "Submit failed: " + err.message };
+    render();
+  }
+}
+
+// ============================================================================
+// EVENTS
+// ============================================================================
+document.querySelectorAll("nav.tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    STATE.tab = btn.dataset.tab;
+    STATE.expandedRow = null;
+    render();
+  });
+});
+$("#refreshBtn").addEventListener("click", loadData);
+
+// Update the "Updated Xm ago" text every minute without re-rendering
+setInterval(() => {
+  if (STATE.lastUpdated) {
+    $("#updated").textContent = "Updated " + fmtRelative(STATE.lastUpdated);
+  }
+}, 30000);
+
+// Re-render the leaderboard chart on resize so it re-flows to the new width.
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  if (STATE.tab !== "leaderboard" || !STATE.data) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => render(), 150);
+});
+
+// Re-fetch when tab becomes visible again (handles users returning to the app)
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && STATE.lastUpdated) {
+    const ageMin = (Date.now() - STATE.lastUpdated.getTime()) / 60000;
+    if (ageMin > 5) loadData();
+  }
+});
+
+loadData();
+</script>
+</body>
+</html>
